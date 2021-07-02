@@ -2,11 +2,17 @@ package com.example.calculator
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import java.lang.NumberFormatException
 
+private const val TAG = "activity_lifecycle"
+private const val ContentsOfPendingOperation = "TEXTVIEW_CONTENTS"
+private const val ContentsOfOperand1 = "OPERAND1_CONTENTS"
+private const val StateOfOperand1 = "StateOfOperand1"
 class MainActivity : AppCompatActivity() {
     private lateinit var result: EditText //lateinit: lateinititalisation w non-nullable value
     private lateinit var newNumber: EditText
@@ -18,6 +24,8 @@ class MainActivity : AppCompatActivity() {
         //findViewById() finds the view by the ID it is given.
     }
     //lazy function is thread safe.
+    //we can also initialise displayOperation with lateinit, but then it'll be no more immutable(val)
+    //private lateinit var displayOperation: TextView
 
     //variables to hold operands and types of calculation
     private var operand1: Double? = null
@@ -70,10 +78,11 @@ class MainActivity : AppCompatActivity() {
 
         val opListener = View.OnClickListener { v ->
             val op = (v as Button).text.toString()
-            val value = newNumber.text.toString()
-
-            if(value.isNotEmpty()) {
+            try{
+            val value = newNumber.text.toString().toDouble()
                 performOperation(value, op)
+            }catch(e: NumberFormatException) {
+                newNumber.setText("")
             }
             pendingOperation = op
             displayOperation.text = pendingOperation
@@ -89,11 +98,11 @@ class MainActivity : AppCompatActivity() {
 
         }
     //operand1, 2
-    private fun performOperation(value: String, op: String) {
+    private fun performOperation(value: Double, op: String) {
        if(operand1 == null) {
-          operand1 = value.toDouble()
+          operand1 = value
        } else {
-           operand2 = value.toDouble()
+           operand2 = value
 
            if(pendingOperation == "=") {
                pendingOperation = op
@@ -112,5 +121,32 @@ class MainActivity : AppCompatActivity() {
            result.setText(operand1.toString())
            newNumber.setText("")
        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        Log.d(TAG, "onSaveInstanceState: called")
+        super.onSaveInstanceState(outState)
+        if(operand1 != null) {
+            outState.putDouble(ContentsOfOperand1, operand1!!)
+            outState.putBoolean(StateOfOperand1, true)
+        }
+        //!! BangBang operator returns a NPE if the operand1 will be null.
+        //but ? Safe Call Operator, will only proceed if the operand1 is not null.
+        //so ? Safe Call Operator is a better thing to use.
+        outState.putString(ContentsOfPendingOperation, displayOperation?.text.toString())
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        Log.d(TAG, "onRestoreInstanceState: called")
+        super.onRestoreInstanceState(savedInstanceState)
+        operand1 = if(savedInstanceState.getBoolean(StateOfOperand1, false)) {
+            savedInstanceState.getDouble(ContentsOfOperand1)
+        }else {
+            null
+        }
+
+        pendingOperation = savedInstanceState.getString(ContentsOfPendingOperation).toString()
+        displayOperation.text = pendingOperation
+
     }
 }
