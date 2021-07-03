@@ -59,6 +59,8 @@ class MainActivity : AppCompatActivity() {
         val buttonMinus = findViewById<Button>(R.id.BTN_SUB)
         val buttonDivide = findViewById<Button>(R.id.BTN_DIV)
         val buttonMultiply = findViewById<Button>(R.id.BTN_MUL)
+        //neg number:
+        val negSign = findViewById<Button>(R.id.BTN_NEG)
 
         val listener = View.OnClickListener { v ->
             val tap = v as Button
@@ -94,6 +96,21 @@ class MainActivity : AppCompatActivity() {
         buttonMultiply.setOnClickListener(opListener)
         buttonPlus.setOnClickListener(opListener)
         buttonMinus.setOnClickListener(opListener)
+
+        negSign.setOnClickListener { view ->
+        val  value = newNumber.text.toString()
+        if(value.isEmpty()) {
+            newNumber.setText("-")
+        } else {
+            try{
+                var doubleValue = value.toDouble()
+                doubleValue *= -1
+                newNumber.setText(doubleValue.toString())
+            }catch(e: NumberFormatException) {
+                newNumber.setText("")
+            }
+        }
+        }
 
 
         }
